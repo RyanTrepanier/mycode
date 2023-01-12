@@ -57,10 +57,10 @@ def main():
     start = "&start_date=2022-12-05"
     end = "&end_date=2023-01-10"
     apodresp = requests.get(API + start + end + nasacreds)
-    apod = apodresp.json()
-    i = 0
+    apod = apodresp.json() 
 
     # display images and put in /final_project
+    i = 0
     for image in apod:
         try:
             images.append(image['hdurl'])
