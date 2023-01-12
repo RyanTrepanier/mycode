@@ -16,7 +16,11 @@ import sys
 
 images = []
 API = "https://api.nasa.gov/planetary/apod?"
-key = 16#get_random_bytes(16)
+#key = get_random_bytes(16)
+blocksize = 16
+keysize = 16
+key = os.urandom(keysize)
+iv = os.urandom(blocksize)
 
 def getcreds():
     with open("/home/student/mycode/final_project/nasa.creds", "r") as mycreds:
@@ -24,14 +28,12 @@ def getcreds():
         nasacreds = "&api_key=" + nasacreds.strip("\n")
     return nasacreds
 
-def encrypt(plaintxt, img):
+def encrypt(plaintxt):
     cipher = AES.new(key, AES.MODE_CBC)
     ct_bytes = cipher.encrypt(pad(plaintxt, AES.block_size))
     iv = b64encode(cipher.iv).decode('utf-8')
     ct = b64encode(ct_bytes).decode('utf-8')
     result = json.dumps({'iv':iv, 'ciphertext': ct})
-    ct_img = Image.open(img.filename, data=Image.frombytes(mode='RGB', data=ct_bytes, size=img.size))
-    ct_img.show()
     return result
 
 
@@ -64,21 +66,40 @@ def main():
             images.append(image['hdurl'])
         except:
             images.append(image['url'])
-        urllib.request.urlretrieve(images[i], "/home/student/mycode/final_project/"+images[i].rsplit('/', 1)[1])
-        img = Image.open("/home/student/mycode/final_project/"+images[i].rsplit('/', 1)[1]) 
+        urllib.request.urlretrieve(images[i], "/home/student/mycode/final_project/plaintext_images"+images[i].rsplit('/', 1)[1])
+        img = Image.open("/home/student/mycode/final_project/plaintext_images"+images[i].rsplit('/', 1)[1]) 
         img.show()
-        
-        # Encrypt photos
-        # USE    for pic in os.listdir(pathtoproject)
-        # with open(img.filename, 'rb') as im:
-        #     f = im.read()
-        #     b = bytearray(f) 
-        #     enc = encrypt(b, img)
         i += 1
     
-    
-        
-    
+    # ENCRYPT
+    for pic in os.listdir("/home/student/mycode/final_project/plaintext_images"):
+        if pic.endswith("png") or pic.endswith("jpg"):
+            path = "/home/student/mycode/final_project/plaintext_images/" + pic
+            with open(path, 'rb') as file1:  
+                data = file1.read()
+                cipher = AES.new(key, AES.MODE_CBC, iv)
+                ciphertext = cipher.encrypt(pad(data, blocksize))
+                encrypted_filename = "enc_" + pic
+                with open("/home/student/mycode/final_project/encrypted/"+encrypted_filename, 'wb') as file2:
+                    file2.write(ciphertext)
+
+
+    # DECRYPT 
+    for pic in os.listdir("/home/student/mycode/final_project/encrypted"):
+        if pic.endswith("png") or pic.endswith("jpg") and pic.startswith("enc"):
+            path = "/home/student/mycode/final_project/encrypted/" + pic
+            with open(path, 'rb') as file1:
+                data = file1.read()
+                cipher2 = AES.new(key, AES.MODE_CBC, iv)
+                decrypted_data = unpad(cipher2.decrypt(data), blocksize)
+                decrypted_filename = "/home/student/mycode/final_project/decrypted/"+pic.replace("enc", "dec")
+                with open(decrypted_filename, 'wb') as file2:
+                    file2.write(decrypted_data)
+
+    # CLEAN UP
+    for garbage in os.listdir("/home/student/mycode/final_project"):
+        if os.path.isfile(garbage) and garbage.startswith("plaintext_images"):
+            os.remove(garbage)
 
 
 if __name__ == "__main__":
