@@ -6,6 +6,7 @@
   
   vars:
     vendorip: '192.168.22.55'
+    somepackage: cowsay
     
   tasks:
   - name: Print out to the screen
