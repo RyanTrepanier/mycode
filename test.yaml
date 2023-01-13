@@ -1,0 +1,18 @@
+- name: Bird Feeder Maker
+  hosts: Charles, Eli, Ryan
+
+  tasks:
+
+  - name: cut wood
+    saw: # module -> run saw.py
+    length: 10
+    count: 3
+
+  - name: nail it together
+    hammer: # module -> run hammer.py
+    nails: 16 penny
+
+  - name: paint it
+    brush: # module -> run brush.py
+      type: latex
+      color: red
